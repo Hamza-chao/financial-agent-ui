@@ -2,6 +2,7 @@
 'use client';
 
 import React, { useState, useEffect, useRef } from 'react';
+import Image from 'next/image'; // Import the Next.js Image component
 
 // Define the structure for a chat message
 interface Message {
@@ -12,12 +13,10 @@ interface Message {
 
 // --- Reusable UI Components ---
 
-// ** THE NEW ICON IS HERE **
 const AiIcon = () => (
     <div className="flex-shrink-0 w-10 h-10 rounded-full bg-slate-200 flex items-center justify-center">
-        {/* This is a new SVG for a "finance chart" icon */}
-        <svg className="w-6 h-6 text-indigo-600" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
-            <path d="M16 6l2.29 2.29-4.88 4.88-4-4L2 16.59 3.41 18l6-6 4 4 6.3-6.29L22 12V6h-6z"></path>
+        <svg className="w-6 h-6 text-blue-600" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M16 6l2.29 2.29-4.88 4.88-4-4L2 16.59 3.41 18l6-6 4 4 6.3-6.29L22 12V6z"></path>
         </svg>
     </div>
 );
@@ -52,8 +51,7 @@ export default function FinancialAnalystPage() {
     const [isLoading, setIsLoading] = useState(false);
     const chatContainerRef = useRef<HTMLDivElement>(null);
 
-    // For local testing, use this URL
-    const API_URL = "http://localhost:8000/chat";
+    const API_URL = "https://financial-agent-service-597955193973.us-central1.run.app/chat";
 
     useEffect(() => {
         chatContainerRef.current?.scrollTo(0, chatContainerRef.current.scrollHeight);
@@ -92,8 +90,9 @@ export default function FinancialAnalystPage() {
                 chart_image: data.chart_image,
             };
             setMessages(prev => [...prev, assistantMessage]);
-        } catch (err: any) {
-            const errorMessage: Message = { role: 'assistant', text: `Sorry, something went wrong: ${err.message}` };
+        // ** THE FIX IS HERE ** We changed `err: any` to `err`, and cast it to an Error type
+        } catch (err) {
+            const errorMessage: Message = { role: 'assistant', text: `Sorry, something went wrong: ${(err as Error).message}` };
             setMessages(prev => [...prev, errorMessage]);
         } finally {
             setIsLoading(false);
@@ -133,8 +132,8 @@ export default function FinancialAnalystPage() {
                 <div className="w-full max-w-2xl h-[90vh] flex flex-col bg-white rounded-2xl shadow-2xl m-4">
                     {/* Header */}
                     <header className="bg-gradient-to-r from-blue-600 to-indigo-700 text-white p-4 rounded-t-2xl flex items-center justify-center shadow-md">
-                        <svg className="w-7 h-7 mr-3" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"><path d="M16 6l2.29 2.29-4.88 4.88-4-4L2 16.59 3.41 18l6-6 4 4 6.3-6.29L22 12V6z"></path></svg>
-                        <h1 className="text-xl font-bold tracking-wider">AI Financial Analyst</h1>
+                        <AiIcon />
+                        <h1 className="text-xl font-bold tracking-wider ml-3">AI Financial Analyst</h1>
                     </header>
 
                     {/* Chat Container */}
@@ -146,9 +145,12 @@ export default function FinancialAnalystPage() {
                                     <p className="whitespace-pre-wrap">{msg.text}</p>
                                     {msg.chart_image && (
                                       <div className="mt-4 border-t border-slate-300 pt-4">
-                                          <img
+                                          {/* ** THE SECOND FIX IS HERE ** We are now using the optimized Next.js Image component */}
+                                          <Image
                                               src={`data:image/png;base64,${msg.chart_image}`}
                                               alt="Stock Price Chart"
+                                              width={500} // It's good practice to provide dimensions
+                                              height={300}
                                               className="rounded-lg shadow-md"
                                           />
                                       </div>

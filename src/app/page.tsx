@@ -15,8 +15,8 @@ interface Message {
 
 const AiIcon = () => (
     <div className="flex-shrink-0 w-10 h-10 rounded-full bg-slate-200 flex items-center justify-center">
-        <svg className="w-6 h-6 text-blue-600" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
-            <path d="M16 6l2.29 2.29-4.88 4.88-4-4L2 16.59 3.41 18l6-6 4 4 6.3-6.29L22 12V6z"></path>
+        <svg className="w-6 h-6 text-indigo-600" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M16 6l2.29 2.29-4.88 4.88-4-4L2 16.59 3.41 18l6-6 4 4 6.3-6.29L22 12V6h-6z"></path>
         </svg>
     </div>
 );
@@ -90,7 +90,7 @@ export default function FinancialAnalystPage() {
                 chart_image: data.chart_image,
             };
             setMessages(prev => [...prev, assistantMessage]);
-        // ** THE FIX IS HERE ** We changed `err: any` to `err`, and cast it to an Error type
+        // ** THE FIX IS HERE ** We changed `err: any` to `err` and handle it safely.
         } catch (err) {
             const errorMessage: Message = { role: 'assistant', text: `Sorry, something went wrong: ${(err as Error).message}` };
             setMessages(prev => [...prev, errorMessage]);

@@ -2,7 +2,7 @@
 'use client';
 
 import React, { useState, useEffect, useRef } from 'react';
-import Image from 'next/image'; // Import the Next.js Image component
+import Image from 'next/image';
 
 // Define the structure for a chat message
 interface Message {
@@ -13,8 +13,10 @@ interface Message {
 
 // --- Reusable UI Components ---
 
+// ** THIS ICON IS NOW ONLY FOR THE CHAT BUBBLES **
 const AiIcon = () => (
     <div className="flex-shrink-0 w-10 h-10 rounded-full bg-slate-200 flex items-center justify-center">
+        {/* This is a "microchip" SVG icon */}
         <svg className="w-6 h-6 text-indigo-600" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
             <path d="M18 4h-4V2h-4v2H6c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zM8 18H6v-2h2v2zm0-4H6v-2h2v2zm0-4H6V8h2v2zm4 4h-2v-2h2v2zm0-4h-2V8h2v2zm0-4h-2V4h2v4zm4 8h-2v-2h2v2zm0-4h-2v-2h2v2zm0-4h-2V8h2v2z"/>
         </svg>
@@ -90,7 +92,6 @@ export default function FinancialAnalystPage() {
                 chart_image: data.chart_image,
             };
             setMessages(prev => [...prev, assistantMessage]);
-        // ** THE FIX IS HERE ** We changed `err: any` to `err` and handle it safely.
         } catch (err) {
             const errorMessage: Message = { role: 'assistant', text: `Sorry, something went wrong: ${(err as Error).message}` };
             setMessages(prev => [...prev, errorMessage]);
@@ -132,8 +133,9 @@ export default function FinancialAnalystPage() {
                 <div className="w-full max-w-2xl h-[90vh] flex flex-col bg-white rounded-2xl shadow-2xl m-4">
                     {/* Header */}
                     <header className="bg-gradient-to-r from-blue-600 to-indigo-700 text-white p-4 rounded-t-2xl flex items-center justify-center shadow-md">
-                        <AiIcon />
-                        <h1 className="text-xl font-bold tracking-wider ml-3">AI Financial Analyst</h1>
+                        {/* ** THIS ICON IS NOW SEPARATE AND WILL NOT CHANGE ** */}
+                        <svg className="w-7 h-7 mr-3" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"><path d="M16 6l2.29 2.29-4.88 4.88-4-4L2 16.59 3.41 18l6-6 4 4 6.3-6.29L22 12V6z"></path></svg>
+                        <h1 className="text-xl font-bold tracking-wider">AI Financial Analyst</h1>
                     </header>
 
                     {/* Chat Container */}
@@ -145,11 +147,10 @@ export default function FinancialAnalystPage() {
                                     <p className="whitespace-pre-wrap">{msg.text}</p>
                                     {msg.chart_image && (
                                       <div className="mt-4 border-t border-slate-300 pt-4">
-                                          {/* ** THE SECOND FIX IS HERE ** We are now using the optimized Next.js Image component */}
                                           <Image
                                               src={`data:image/png;base64,${msg.chart_image}`}
                                               alt="Stock Price Chart"
-                                              width={500} // It's good practice to provide dimensions
+                                              width={500}
                                               height={300}
                                               className="rounded-lg shadow-md"
                                           />

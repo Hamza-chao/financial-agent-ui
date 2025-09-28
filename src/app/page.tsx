@@ -1,8 +1,10 @@
+// src/app/page.tsx
 'use client';
 
 import React, { useState, useEffect, useRef } from 'react';
 import Image from 'next/image';
 
+// Define the structure for a chat message
 interface Message {
   role: 'user' | 'assistant';
   text: string;
@@ -10,7 +12,6 @@ interface Message {
 }
 
 // --- Reusable UI Components ---
-
 
 const AiIcon = () => (
     <div className="flex-shrink-0 w-10 h-10 rounded-full bg-slate-200 flex items-center justify-center">
@@ -60,47 +61,53 @@ export default function FinancialAnalystPage() {
     const handleSendMessage = async (messageText?: string) => {
         const text = (messageText || userInput).trim();
         if (text === '') return;
-
+    
         setMessages(prev => [...prev, { role: 'user', text: text }]);
         setUserInput('');
         setIsLoading(true);
-
-        const historyForApi = messages[0].role === 'assistant' ? messages.slice(1) : messages;
-
+    
+        // --- CORRECTED HISTORY LOGIC START ---
+    
+        // 'messages' here is the state BEFORE adding the current user's text. This is correct.
+        // We will now create a clean version of the history to send to the API.
         
+        // 1. Remove the initial assistant greeting from the history.
+        const historyForApi = messages[0]?.role === 'assistant' ? messages.slice(1) : messages;
+    
+        // 2. Map the relevant history to the format your backend expects: [['user', '...'], ['assistant', '...']]
         const apiChatHistory = historyForApi.map(msg =>
-           
-            (msg.role === 'user' ? [msg.role, msg.text] : [msg.role, msg.text])
+          [msg.role, msg.text]
         ) as [string, string][];
-            (msg.role === 'user' ? ['user', msg.text] : ['assistant', msg.text])
-        ) as [string, string][];
-
+    
+        // --- CORRECTED HISTORY LOGIC END ---
+    
         try {
-            const response = await fetch(API_URL, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    question: text,
-                    chat_history: apiChatHistory,
-                }),
-            });
-
-            if (!response.ok) {
-                throw new Error(`API Error: ${response.statusText || response.status}`);
-            }
-
-            const data = await response.json();
-            const assistantMessage: Message = {
-                role: 'assistant',
-                text: data.text_response,
-                chart_image: data.chart_image,
-            };
-            setMessages(prev => [...prev, assistantMessage]);
+          const response = await fetch(API_URL, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              question: text,
+              chat_history: apiChatHistory, // Use the corrected history
+            }),
+          });
+    
+          if (!response.ok) {
+            throw new Error(`API Error: ${response.statusText || response.status}`);
+          }
+    
+          const data = await response.json();
+          const assistantMessage: Message = {
+            role: 'assistant',
+            text: data.text_response,
+            chart_image: data.chart_image,
+          };
+          setMessages(prev => [...prev, assistantMessage]);
+    
         } catch (err) {
-            const errorMessage: Message = { role: 'assistant', text: `Sorry, something went wrong: ${(err as Error).message}` };
-            setMessages(prev => [...prev, errorMessage]);
+          const errorMessage: Message = { role: 'assistant', text: `Sorry, something went wrong: ${(err as Error).message}` };
+          setMessages(prev => [...prev, errorMessage]);
         } finally {
-            setIsLoading(false);
+          setIsLoading(false);
         }
     };
 
@@ -137,7 +144,6 @@ export default function FinancialAnalystPage() {
                 <div className="w-full max-w-2xl h-[90vh] flex flex-col bg-white rounded-2xl shadow-2xl m-4">
                     {/* Header */}
                     <header className="bg-gradient-to-r from-blue-600 to-indigo-700 text-white p-4 rounded-t-2xl flex items-center justify-center shadow-md">
-                        {/* ** THIS ICON IS NOW SEPARATE AND WILL NOT CHANGE ** */}
                         <svg className="w-7 h-7 mr-3" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"><path d="M16 6l2.29 2.29-4.88 4.88-4-4L2 16.59 3.41 18l6-6 4 4 6.3-6.29L22 12V6z"></path></svg>
                         <h1 className="text-xl font-bold tracking-wider">AI Financial Analyst</h1>
                     </header>
@@ -150,15 +156,15 @@ export default function FinancialAnalystPage() {
                                 <div className={`${msg.role === 'user' ? 'bg-blue-600 text-white rounded-br-none' : 'bg-slate-200 text-slate-800 rounded-tl-none'} p-4 rounded-lg chat-bubble`}>
                                     <p className="whitespace-pre-wrap">{msg.text}</p>
                                     {msg.chart_image && (
-                                      <div className="mt-4 border-t border-slate-300 pt-4">
-                                          <Image
-                                              src={`data:image/png;base64,${msg.chart_image}`}
-                                              alt="Stock Price Chart"
-                                              width={500}
-                                              height={300}
-                                              className="rounded-lg shadow-md"
-                                          />
-                                      </div>
+                                        <div className="mt-4 border-t border-slate-300 pt-4">
+                                            <Image
+                                                src={`data:image/png;base64,${msg.chart_image}`}
+                                                alt="Stock Price Chart"
+                                                width={500}
+                                                height={300}
+                                                className="rounded-lg shadow-md"
+                                            />
+                                        </div>
                                     )}
                                 </div>
                             </div>
@@ -167,18 +173,18 @@ export default function FinancialAnalystPage() {
                         
                         {messages.length === 1 && (
                              <div className="my-8 text-center">
-                                 <h2 className="text-slate-500 font-semibold mb-4">Try an example:</h2>
-                                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-left">
-                                     <div className="example-prompt bg-white p-3 border border-slate-200 rounded-lg cursor-pointer" onClick={() => handleExampleClick('What are the latest earnings for NVDA?')}>
-                                         <p className="font-semibold text-slate-700">Get Latest Earnings</p>
-                                         <p className="text-sm text-slate-500">for NVIDIA (NVDA)</p>
-                                     </div>
-                                     <div className="example-prompt bg-white p-3 border border-slate-200 rounded-lg cursor-pointer" onClick={() => handleExampleClick('Show me a stock price chart for AAPL')}>
-                                         <p className="font-semibold text-slate-700">Show Stock Chart</p>
-                                         <p className="text-sm text-slate-500">for Apple (AAPL)</p>
-                                     </div>
-                                 </div>
-                             </div>
+                                <h2 className="text-slate-500 font-semibold mb-4">Try an example:</h2>
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-left">
+                                    <div className="example-prompt bg-white p-3 border border-slate-200 rounded-lg cursor-pointer" onClick={() => handleExampleClick('What are the latest earnings for NVDA?')}>
+                                        <p className="font-semibold text-slate-700">Get Latest Earnings</p>
+                                        <p className="text-sm text-slate-500">for NVIDIA (NVDA)</p>
+                                    </div>
+                                    <div className="example-prompt bg-white p-3 border border-slate-200 rounded-lg cursor-pointer" onClick={() => handleExampleClick('Show me a stock price chart for AAPL')}>
+                                        <p className="font-semibold text-slate-700">Show Stock Chart</p>
+                                        <p className="text-sm text-slate-500">for Apple (AAPL)</p>
+                                    </div>
+                                </div>
+                            </div>
                         )}
                     </div>
 

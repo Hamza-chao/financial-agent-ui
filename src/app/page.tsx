@@ -62,24 +62,21 @@ export default function FinancialAnalystPage() {
         const text = (messageText || userInput).trim();
         if (text === '') return;
     
+        // Add user message to UI immediately for responsiveness
         setMessages(prev => [...prev, { role: 'user', text: text }]);
         setUserInput('');
         setIsLoading(true);
     
-        // --- CORRECTED HISTORY LOGIC START ---
-    
-        // 'messages' here is the state BEFORE adding the current user's text. This is correct.
-        // We will now create a clean version of the history to send to the API.
         
-        // 1. Remove the initial assistant greeting from the history.
+        // 1. Remove the initial assistant greeting from the history array if it exists.
         const historyForApi = messages[0]?.role === 'assistant' ? messages.slice(1) : messages;
     
-        // 2. Map the relevant history to the format your backend expects: [['user', '...'], ['assistant', '...']]
+        // 2. Map the filtered history to the format the backend expects: [['user', '...'], ['assistant', '...']]
         const apiChatHistory = historyForApi.map(msg =>
           [msg.role, msg.text]
         ) as [string, string][];
     
-        // --- CORRECTED HISTORY LOGIC END ---
+     
     
         try {
           const response = await fetch(API_URL, {
@@ -87,7 +84,7 @@ export default function FinancialAnalystPage() {
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
               question: text,
-              chat_history: apiChatHistory, // Use the corrected history
+              chat_history: apiChatHistory, // Use the properly formatted history
             }),
           });
     
@@ -101,6 +98,7 @@ export default function FinancialAnalystPage() {
             text: data.text_response,
             chart_image: data.chart_image,
           };
+          // Add the assistant's response to the UI
           setMessages(prev => [...prev, assistantMessage]);
     
         } catch (err) {

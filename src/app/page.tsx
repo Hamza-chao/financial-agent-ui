@@ -1,10 +1,8 @@
-// src/app/page.tsx
 'use client';
 
 import React, { useState, useEffect, useRef } from 'react';
 import Image from 'next/image';
 
-// Define the structure for a chat message
 interface Message {
   role: 'user' | 'assistant';
   text: string;
@@ -13,7 +11,7 @@ interface Message {
 
 // --- Reusable UI Components ---
 
-// ** THIS ICON IS NOW ONLY FOR THE CHAT BUBBLES **
+
 const AiIcon = () => (
     <div className="flex-shrink-0 w-10 h-10 rounded-full bg-slate-200 flex items-center justify-center">
         {/* This is a "microchip" SVG icon */}
@@ -67,7 +65,13 @@ export default function FinancialAnalystPage() {
         setUserInput('');
         setIsLoading(true);
 
-        const apiChatHistory = messages.map(msg => 
+        const historyForApi = messages[0].role === 'assistant' ? messages.slice(1) : messages;
+
+        
+        const apiChatHistory = historyForApi.map(msg =>
+           
+            (msg.role === 'user' ? [msg.role, msg.text] : [msg.role, msg.text])
+        ) as [string, string][];
             (msg.role === 'user' ? ['user', msg.text] : ['assistant', msg.text])
         ) as [string, string][];
 

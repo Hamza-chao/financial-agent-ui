@@ -1,7 +1,7 @@
-// financial-agent-ui/tailwind.config.ts
-import type { Config } from "tailwindcss";
+// tailwind.config.js
 
-const config: Config = {
+/** @type {import('tailwindcss').Config} */
+module.exports = {
   content: [
     "./src/pages/**/*.{js,ts,jsx,tsx,mdx}",
     "./src/components/**/*.{js,ts,jsx,tsx,mdx}",
@@ -11,7 +11,6 @@ const config: Config = {
     extend: {},
   },
   plugins: [
-    require('@tailwindcss/typography'), // This enables the 'prose' classes
+    require('@tailwindcss/typography'), // require() is allowed in .js files
   ],
 };
-export default config;

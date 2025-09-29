@@ -2,6 +2,8 @@
 'use client';
 
 import React, { useState, useEffect, useRef } from 'react';
+import Image from 'next/image';
+import ReactMarkdown from 'react-markdown';
 
 // Define the structure for a chat message
 interface Message {
@@ -12,12 +14,10 @@ interface Message {
 
 // --- Reusable UI Components ---
 
-// ** THE NEW ICON IS HERE **
 const AiIcon = () => (
     <div className="flex-shrink-0 w-10 h-10 rounded-full bg-slate-200 flex items-center justify-center">
-        {/* This is a new SVG for a "finance chart" icon */}
         <svg className="w-6 h-6 text-indigo-600" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
-            <path d="M16 6l2.29 2.29-4.88 4.88-4-4L2 16.59 3.41 18l6-6 4 4 6.3-6.29L22 12V6h-6z"></path>
+            <path d="M18 4h-4V2h-4v2H6c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zM8 18H6v-2h2v2zm0-4H6v-2h2v2zm0-4H6V8h2v2zm4 4h-2v-2h2v2zm0-4h-2V8h2v2zm0-4h-2V4h2v4zm4 8h-2v-2h2v2zm0-4h-2v-2h2v2zm0-4h-2V8h2v2z"/>
         </svg>
     </div>
 );
@@ -52,8 +52,7 @@ export default function FinancialAnalystPage() {
     const [isLoading, setIsLoading] = useState(false);
     const chatContainerRef = useRef<HTMLDivElement>(null);
 
-    // For local testing, use this URL
-    const API_URL = "http://localhost:8000/chat";
+    const API_URL = "https://financial-agent-service-597955193973.us-central1.run.app/chat";
 
     useEffect(() => {
         chatContainerRef.current?.scrollTo(0, chatContainerRef.current.scrollHeight);
@@ -67,8 +66,10 @@ export default function FinancialAnalystPage() {
         setUserInput('');
         setIsLoading(true);
 
-        const apiChatHistory = messages.map(msg => 
-            (msg.role === 'user' ? ['user', msg.text] : ['assistant', msg.text])
+        // This is the corrected logic to ensure history is sent properly
+        const historyForApi = messages[0]?.role === 'assistant' ? messages.slice(1) : messages;
+        const apiChatHistory = historyForApi.map(msg =>
+          [msg.role, msg.text]
         ) as [string, string][];
 
         try {
@@ -82,7 +83,10 @@ export default function FinancialAnalystPage() {
             });
 
             if (!response.ok) {
-                throw new Error(`API Error: ${response.statusText || response.status}`);
+                // Try to get a more specific error message from the backend if possible
+                const errorData = await response.json().catch(() => null);
+                const detail = errorData?.detail || response.statusText;
+                throw new Error(`API Error: ${detail || response.status}`);
             }
 
             const data = await response.json();
@@ -92,8 +96,8 @@ export default function FinancialAnalystPage() {
                 chart_image: data.chart_image,
             };
             setMessages(prev => [...prev, assistantMessage]);
-        } catch (err: any) {
-            const errorMessage: Message = { role: 'assistant', text: `Sorry, something went wrong: ${err.message}` };
+        } catch (err) {
+            const errorMessage: Message = { role: 'assistant', text: `Sorry, something went wrong: ${(err as Error).message}` };
             setMessages(prev => [...prev, errorMessage]);
         } finally {
             setIsLoading(false);
@@ -133,8 +137,8 @@ export default function FinancialAnalystPage() {
                 <div className="w-full max-w-2xl h-[90vh] flex flex-col bg-white rounded-2xl shadow-2xl m-4">
                     {/* Header */}
                     <header className="bg-gradient-to-r from-blue-600 to-indigo-700 text-white p-4 rounded-t-2xl flex items-center justify-center shadow-md">
-                        <svg className="w-7 h-7 mr-3" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"><path d="M16 6l2.29 2.29-4.88 4.88-4-4L2 16.59 3.41 18l6-6 4 4 6.3-6.29L22 12V6z"></path></svg>
-                        <h1 className="text-xl font-bold tracking-wider">AI Financial Analyst</h1>
+                        <AiIcon />
+                        <h1 className="text-xl font-bold tracking-wider ml-3">AI Financial Analyst</h1>
                     </header>
 
                     {/* Chat Container */}
@@ -143,15 +147,24 @@ export default function FinancialAnalystPage() {
                             <div key={index} className={`flex items-start gap-3 mb-6 ${msg.role === 'user' ? 'justify-end' : ''}`}>
                                 {msg.role === 'assistant' && <AiIcon />}
                                 <div className={`${msg.role === 'user' ? 'bg-blue-600 text-white rounded-br-none' : 'bg-slate-200 text-slate-800 rounded-tl-none'} p-4 rounded-lg chat-bubble`}>
-                                    <p className="whitespace-pre-wrap">{msg.text}</p>
+                                    
+                                    {/* FIX: Use ReactMarkdown to render formatted text */}
+                                    <ReactMarkdown className="prose prose-slate max-w-none">
+                                        {msg.text}
+                                    </ReactMarkdown>
+
                                     {msg.chart_image && (
-                                      <div className="mt-4 border-t border-slate-300 pt-4">
-                                          <img
-                                              src={`data:image/png;base64,${msg.chart_image}`}
-                                              alt="Stock Price Chart"
-                                              className="rounded-lg shadow-md"
-                                          />
-                                      </div>
+                                        <div className="mt-4 border-t border-slate-300 pt-4">
+                                            {/* FIX: Wrap Image component in a styled div */}
+                                            <div className="rounded-lg shadow-md overflow-hidden">
+                                                <Image
+                                                    src={`data:image/png;base64,${msg.chart_image}`}
+                                                    alt="Stock Price Chart"
+                                                    width={500}
+                                                    height={300}
+                                                />
+                                            </div>
+                                        </div>
                                     )}
                                 </div>
                             </div>
@@ -160,18 +173,18 @@ export default function FinancialAnalystPage() {
                         
                         {messages.length === 1 && (
                              <div className="my-8 text-center">
-                                 <h2 className="text-slate-500 font-semibold mb-4">Try an example:</h2>
-                                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-left">
-                                     <div className="example-prompt bg-white p-3 border border-slate-200 rounded-lg cursor-pointer" onClick={() => handleExampleClick('What are the latest earnings for NVDA?')}>
-                                         <p className="font-semibold text-slate-700">Get Latest Earnings</p>
-                                         <p className="text-sm text-slate-500">for NVIDIA (NVDA)</p>
-                                     </div>
-                                     <div className="example-prompt bg-white p-3 border border-slate-200 rounded-lg cursor-pointer" onClick={() => handleExampleClick('Show me a stock price chart for AAPL')}>
-                                         <p className="font-semibold text-slate-700">Show Stock Chart</p>
-                                         <p className="text-sm text-slate-500">for Apple (AAPL)</p>
-                                     </div>
-                                 </div>
-                             </div>
+                                <h2 className="text-slate-500 font-semibold mb-4">Try an example:</h2>
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-left">
+                                    <div className="example-prompt bg-white p-3 border border-slate-200 rounded-lg cursor-pointer" onClick={() => handleExampleClick('What are the latest earnings for NVDA?')}>
+                                        <p className="font-semibold text-slate-700">Get Latest Earnings</p>
+                                        <p className="text-sm text-slate-500">for NVIDIA (NVDA)</p>
+                                    </div>
+                                    <div className="example-prompt bg-white p-3 border border-slate-200 rounded-lg cursor-pointer" onClick={() => handleExampleClick('Show me a stock price chart for AAPL')}>
+                                        <p className="font-semibold text-slate-700">Show Stock Chart</p>
+                                        <p className="text-sm text-slate-500">for Apple (AAPL)</p>
+                                    </div>
+                                </div>
+                            </div>
                         )}
                     </div>
 

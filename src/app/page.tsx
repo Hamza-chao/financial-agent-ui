@@ -3,6 +3,7 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import Image from 'next/image';
+import ReactMarkdown from 'react-markdown';
 
 // Define the structure for a chat message
 interface Message {
@@ -15,7 +16,6 @@ interface Message {
 
 const AiIcon = () => (
     <div className="flex-shrink-0 w-10 h-10 rounded-full bg-slate-200 flex items-center justify-center">
-        {/* This is a "microchip" SVG icon */}
         <svg className="w-6 h-6 text-indigo-600" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
             <path d="M18 4h-4V2h-4v2H6c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zM8 18H6v-2h2v2zm0-4H6v-2h2v2zm0-4H6V8h2v2zm4 4h-2v-2h2v2zm0-4h-2V8h2v2zm0-4h-2V4h2v4zm4 8h-2v-2h2v2zm0-4h-2v-2h2v2zm0-4h-2V8h2v2z"/>
         </svg>
@@ -61,51 +61,45 @@ export default function FinancialAnalystPage() {
     const handleSendMessage = async (messageText?: string) => {
         const text = (messageText || userInput).trim();
         if (text === '') return;
-    
-        // Add user message to UI immediately for responsiveness
+
         setMessages(prev => [...prev, { role: 'user', text: text }]);
         setUserInput('');
         setIsLoading(true);
-    
-        
-        // 1. Remove the initial assistant greeting from the history array if it exists.
+
+        // This is the corrected logic to ensure history is sent properly
         const historyForApi = messages[0]?.role === 'assistant' ? messages.slice(1) : messages;
-    
-        // 2. Map the filtered history to the format the backend expects: [['user', '...'], ['assistant', '...']]
         const apiChatHistory = historyForApi.map(msg =>
           [msg.role, msg.text]
         ) as [string, string][];
-    
-     
-    
+
         try {
-          const response = await fetch(API_URL, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              question: text,
-              chat_history: apiChatHistory, // Use the properly formatted history
-            }),
-          });
-    
-          if (!response.ok) {
-            throw new Error(`API Error: ${response.statusText || response.status}`);
-          }
-    
-          const data = await response.json();
-          const assistantMessage: Message = {
-            role: 'assistant',
-            text: data.text_response,
-            chart_image: data.chart_image,
-          };
-          // Add the assistant's response to the UI
-          setMessages(prev => [...prev, assistantMessage]);
-    
+            const response = await fetch(API_URL, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    question: text,
+                    chat_history: apiChatHistory,
+                }),
+            });
+
+            if (!response.ok) {
+                const errorData = await response.json().catch(() => null);
+                const detail = errorData?.detail || response.statusText;
+                throw new Error(`API Error: ${detail || response.status}`);
+            }
+
+            const data = await response.json();
+            const assistantMessage: Message = {
+                role: 'assistant',
+                text: data.text_response,
+                chart_image: data.chart_image,
+            };
+            setMessages(prev => [...prev, assistantMessage]);
         } catch (err) {
-          const errorMessage: Message = { role: 'assistant', text: `Sorry, something went wrong: ${(err as Error).message}` };
-          setMessages(prev => [...prev, errorMessage]);
+            const errorMessage: Message = { role: 'assistant', text: `Sorry, something went wrong: ${(err as Error).message}` };
+            setMessages(prev => [...prev, errorMessage]);
         } finally {
-          setIsLoading(false);
+            setIsLoading(false);
         }
     };
 
@@ -142,7 +136,7 @@ export default function FinancialAnalystPage() {
                 <div className="w-full max-w-2xl h-[90vh] flex flex-col bg-white rounded-2xl shadow-2xl m-4">
                     {/* Header */}
                     <header className="bg-gradient-to-r from-blue-600 to-indigo-700 text-white p-4 rounded-t-2xl flex items-center justify-center shadow-md">
-                        <svg className="w-7 h-7 mr-3" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"><path d="M16 6l2.29 2.29-4.88 4.88-4-4L2 16.59 3.41 18l6-6 4 4 6.3-6.29L22 12V6z"></path></svg>
+                         <svg className="w-7 h-7 mr-3" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"><path d="M16 6l2.29 2.29-4.88 4.88-4-4L2 16.59 3.41 18l6-6 4 4 6.3-6.29L22 12V6z"></path></svg>
                         <h1 className="text-xl font-bold tracking-wider">AI Financial Analyst</h1>
                     </header>
 
@@ -152,16 +146,23 @@ export default function FinancialAnalystPage() {
                             <div key={index} className={`flex items-start gap-3 mb-6 ${msg.role === 'user' ? 'justify-end' : ''}`}>
                                 {msg.role === 'assistant' && <AiIcon />}
                                 <div className={`${msg.role === 'user' ? 'bg-blue-600 text-white rounded-br-none' : 'bg-slate-200 text-slate-800 rounded-tl-none'} p-4 rounded-lg chat-bubble`}>
-                                    <p className="whitespace-pre-wrap">{msg.text}</p>
+                                    
+                                    {/* FIX: Use ReactMarkdown to render formatted text */}
+                                    <ReactMarkdown className="prose prose-sm prose-slate max-w-none">
+                                        {msg.text}
+                                    </ReactMarkdown>
+
                                     {msg.chart_image && (
                                         <div className="mt-4 border-t border-slate-300 pt-4">
-                                            <Image
-                                                src={`data:image/png;base64,${msg.chart_image}`}
-                                                alt="Stock Price Chart"
-                                                width={500}
-                                                height={300}
-                                                className="rounded-lg shadow-md"
-                                            />
+                                            {/* FIX: Wrap Image component in a styled div */}
+                                            <div className="rounded-lg shadow-md overflow-hidden">
+                                                <Image
+                                                    src={`data:image/png;base64,${msg.chart_image}`}
+                                                    alt="Stock Price Chart"
+                                                    width={500}
+                                                    height={300}
+                                                />
+                                            </div>
                                         </div>
                                     )}
                                 </div>

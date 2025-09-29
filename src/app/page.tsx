@@ -76,7 +76,7 @@ export default function FinancialAnalystPage() {
                             <div key={index} className={`flex items-start gap-3 mb-6 ${msg.role === 'user' ? 'justify-end' : ''}`}>
                                 {msg.role === 'assistant' && <AiIcon />}
                                 <div className={`${msg.role === 'user' ? 'bg-blue-600 text-white rounded-br-none' : 'bg-slate-200 text-slate-800 rounded-tl-none'} p-4 rounded-lg chat-bubble`}>
-                                    <ReactMarkdown className="prose prose-sm prose-slate max-w-none">{msg.text}</ReactMarkdown>
+                                    <div className="prose prose-sm prose-slate max-w-none"><ReactMarkdown>{msg.text}</ReactMarkdown></div>
                                     {msg.chart_image && (
                                         <div className="mt-4 border-t border-slate-300 pt-4">
                                             <div className="rounded-lg shadow-md overflow-hidden">

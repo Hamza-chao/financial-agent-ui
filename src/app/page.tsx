@@ -83,7 +83,10 @@ export default function FinancialAnalystPage() {
             });
 
             if (!response.ok) {
+<<<<<<< HEAD
                 // Try to get a more specific error message from the backend if possible
+=======
+>>>>>>> e2eda993ee53530551fc62dd365615e4f9282ae4
                 const errorData = await response.json().catch(() => null);
                 const detail = errorData?.detail || response.statusText;
                 throw new Error(`API Error: ${detail || response.status}`);
@@ -137,8 +140,13 @@ export default function FinancialAnalystPage() {
                 <div className="w-full max-w-2xl h-[90vh] flex flex-col bg-white rounded-2xl shadow-2xl m-4">
                     {/* Header */}
                     <header className="bg-gradient-to-r from-blue-600 to-indigo-700 text-white p-4 rounded-t-2xl flex items-center justify-center shadow-md">
+<<<<<<< HEAD
                         <AiIcon />
                         <h1 className="text-xl font-bold tracking-wider ml-3">AI Financial Analyst</h1>
+=======
+                         <svg className="w-7 h-7 mr-3" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"><path d="M16 6l2.29 2.29-4.88 4.88-4-4L2 16.59 3.41 18l6-6 4 4 6.3-6.29L22 12V6z"></path></svg>
+                        <h1 className="text-xl font-bold tracking-wider">AI Financial Analyst</h1>
+>>>>>>> e2eda993ee53530551fc62dd365615e4f9282ae4
                     </header>
 
                     {/* Chat Container */}
@@ -149,7 +157,11 @@ export default function FinancialAnalystPage() {
                                 <div className={`${msg.role === 'user' ? 'bg-blue-600 text-white rounded-br-none' : 'bg-slate-200 text-slate-800 rounded-tl-none'} p-4 rounded-lg chat-bubble`}>
                                     
                                     {/* FIX: Use ReactMarkdown to render formatted text */}
+<<<<<<< HEAD
                                     <ReactMarkdown className="prose prose-slate max-w-none">
+=======
+                                    <ReactMarkdown className="prose prose-sm prose-slate max-w-none">
+>>>>>>> e2eda993ee53530551fc62dd365615e4f9282ae4
                                         {msg.text}
                                     </ReactMarkdown>
 
